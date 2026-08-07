@@ -1,5 +1,7 @@
 # Layout Patterns
 
+> Verified against maquina-components 0.6.1.
+
 **Official Documentation:** https://maquina.app/documentation/components/
 
 
@@ -33,7 +35,7 @@ The sidebar + inset pattern provides the foundation for dashboard-style applicat
     
     <%= render "components/sidebar/inset" do %>
       <%= render "components/header" do %>
-        <%= render "components/sidebar/trigger", icon_name: :panel_left %>
+        <%= render "components/sidebar/trigger", icon_name: :left_panel %>
         
         <div class="flex-1">
           <%= yield :header %>
@@ -553,7 +555,7 @@ Table on desktop, cards on mobile:
   <% end %>
   <%= render "components/dropdown_menu/content", align: :end do %>
     <%= render "components/dropdown_menu/item", href: edit_path do %>
-      <%= icon_for :edit, class: "size-4" %> <%= t("actions.edit") %>
+      <%= icon_for :pencil, class: "size-4" %> <%= t("actions.edit") %>
     <% end %>
     
     <% if additional_items %>
@@ -593,9 +595,23 @@ Toggle implementation:
         data-component="button"
         data-variant="ghost"
         data-size="icon">
-  <%= icon_for :sun, class: "size-4 dark:hidden" %>
-  <%= icon_for :moon, class: "size-4 hidden dark:block" %>
+  <%= icon_for :sun, class: "size-4", data: { theme_icon: "light" } %>
+  <%= icon_for :moon, class: "size-4", data: { theme_icon: "dark" } %>
 </button>
+```
+
+`sun` and `moon` are not built-in names — supply them through the app's `main_icon_svg_for`
+override, or swap in two names from the roster in
+[installation-guide.md](installation-guide.md#default-built-in-icons). Under `strict_icons` an
+unresolvable name raises.
+
+Which one shows is a theme concern, so it belongs in the theme's own block rather than a pair
+of `dark:` twins on the element:
+
+```css
+[data-theme-icon="dark"] { display: none; }
+.dark [data-theme-icon="light"] { display: none; }
+.dark [data-theme-icon="dark"] { display: block; }
 ```
 
 ```javascript

@@ -2,6 +2,9 @@
 
 Complete reference for all maquina_components. Each entry includes when to use, props, variants, and examples.
 
+> Verified against maquina-components 0.6.1. The canonical variant and size vocabulary lives in
+> [SKILL.md](../skills/ui/SKILL.md#core-rules); this file follows it.
+
 **Official Documentation:** https://maquina.app/documentation/components/
 
 ---
@@ -127,7 +130,7 @@ Collapsible navigation sidebar with cookie-based persistence.
   
   <%= render "components/sidebar/inset" do %>
     <%= render "components/header" do %>
-      <%= render "components/sidebar/trigger", icon_name: :panel_left %>
+      <%= render "components/sidebar/trigger", icon_name: :left_panel %>
     <% end %>
     <main><%= yield %></main>
   <% end %>
@@ -182,7 +185,7 @@ Top navigation bar, typically used with sidebar inset.
 **Usage:**
 ```erb
 <%= render "components/header" do %>
-  <%= render "components/sidebar/trigger", icon_name: :panel_left %>
+  <%= render "components/sidebar/trigger", icon_name: :left_panel %>
   
   <div class="flex-1">
     <%= render "components/breadcrumbs" do %>...breadcrumbs...<% end %>
@@ -259,7 +262,7 @@ Versatile content container with header, content, and footer sections.
   <%= render "components/card/content", css_classes: "pt-0" do %>
     <div class="text-2xl font-bold">$12,500</div>
     <div class="flex items-center gap-1 text-sm text-emerald-600">
-      <%= icon_for :trending_up, class: "size-4" %> +12.5%
+      <%= icon_for :trend_up, class: "size-4" %> +12.5%
     </div>
   <% end %>
 <% end %>
@@ -560,11 +563,7 @@ Metric cards in a responsive grid for dashboards and overview pages.
 | `icon_classes` | String | `""` | Color utility for the icon area |
 | `value_classes` | String | `""` | Color utility for the value |
 
-------|------|---------|-------------|
-| `title` | String | required | Metric label |
-| `value` | String | required | Main value display |
-| `description` | String | `nil` | Trend or comparison text |
-| `icon` | Symbol | `nil` | Icon identifier |
+`container_class`, `icon_class` and `value_class` are accepted as legacy singular aliases.
 
 ---
 
@@ -642,11 +641,11 @@ Accessible dropdown with keyboard navigation.
     <%= render "components/dropdown_menu/separator" %>
     
     <%= render "components/dropdown_menu/item", href: edit_path do %>
-      <%= icon_for :edit, class: "size-4" %> Edit
+      <%= icon_for :pencil, class: "size-4" %> Edit
     <% end %>
     
     <%= render "components/dropdown_menu/item", href: duplicate_path do %>
-      <%= icon_for :copy, class: "size-4" %> Duplicate
+      <%= icon_for :clipboard_list, class: "size-4" %> Duplicate
       <%= render "components/dropdown_menu/shortcut", text: "⌘D" %>
     <% end %>
     
@@ -678,7 +677,7 @@ Accessible dropdown with keyboard navigation.
 <%# Simple — data-driven menu %>
 <%= dropdown_menu_simple "Actions", items: [
   { label: "Edit", href: edit_item_path(@item), icon: :pencil },
-  { label: "Duplicate", href: duplicate_item_path(@item), icon: :copy },
+  { label: "Duplicate", href: duplicate_item_path(@item), icon: :clipboard_list },
   { label: "Delete", href: item_path(@item), method: :delete, variant: :destructive, icon: :trash }
 ] %>
 
@@ -688,7 +687,7 @@ Accessible dropdown with keyboard navigation.
   <% menu.content(align: :end) do |content| %>
     <% content.label("Actions") %>
     <% content.item("Edit", href: edit_path, icon: :pencil) %>
-    <% content.item(href: duplicate_path, icon: :copy) do |item| %>
+    <% content.item(href: duplicate_path, icon: :clipboard_list) do |item| %>
       Duplicate
       <% item.shortcut("⌘D") %>
     <% end %>
@@ -781,7 +780,7 @@ Single or multiple selection button group.
 |------|--------|---------|
 | `type` | `:single`, `:multiple` | `:single` |
 | `variant` | `:default`, `:outline` | `:default` |
-| `size` | `:sm`, `:md`, `:lg` | `:md` |
+| `size` | `:sm`, `:default`, `:lg` | `:default` |
 
 **Helper (preferred):**
 ```erb
@@ -1356,3 +1355,108 @@ Toggle switch for boolean values.
   <span data-input-group-part="suffix">.com</span>
 </div>
 ```
+
+---
+
+## Complete Partial Index
+
+Every partial the engine ships, with its strict-locals signature. This is the authoritative
+list — a path not here does not exist, and a keyword not here raises.
+
+Every partial also accepts `css_classes: ""` and `**html_options`; those are omitted below.
+Leaf partials take `text:` for a string or `content:` for captured HTML, with a block as
+fallback.
+
+### Roots
+
+| Partial | Signature |
+|---------|-----------|
+| `components/alert` | `variant: :default, icon: nil` |
+| `components/badge` | `variant: :default, size: :md` |
+| `components/breadcrumbs` | `responsive: false, collapse_after: 0` |
+| `components/calendar` | `selected:, selected_end:, month:, year:, mode: :single, min_date:, max_date:, disabled_dates: [], show_outside_days: true, week_starts_on: :sunday, cell_size:, input_name:, input_name_end:` |
+| `components/card` | — |
+| `components/combobox` | `id:, name:, value:, placeholder: "Select..."` |
+| `components/date_picker` | `selected:, selected_end:, mode: :single, min_date:, max_date:, disabled_dates: [], show_outside_days: true, week_starts_on: :sunday, placeholder:, input_name:, input_name_end:, id:, disabled: false, required: false` |
+| `components/drawer` | `id:, state: :closed, side: :right, aria_label: "Drawer"` |
+| `components/dropdown` | `id:, side: :top, align: :start` — bare popover primitive |
+| `components/dropdown_menu` | `auto_close: false` |
+| `components/empty` | `variant: :default, size: :default` |
+| `components/header` | — |
+| `components/label` | `text:, content:, for_id:, required: false` |
+| `components/menu_button` | `title: "", subtitle:, icon:, text_icon:, icon_classes: "", submenu: false, id:` |
+| `components/pagination` | — |
+| `components/separator` | `orientation: :horizontal` |
+| `components/sidebar` | `id:, state: :collapsed, collapsible: :offcanvas, variant: :inset, side: :left` |
+| `components/simple_table` | `collection:, columns:, caption:, variant:, table_variant:, empty_message: "No data available", row_id:, html_options: {}` |
+| `components/table` | `container: true, variant:, table_variant:` |
+| `components/toast` | `variant: :default, title:, description:, icon:, duration: 5000, dismissible: true, content:` |
+| `components/toaster` | `position: :bottom_right, content:` |
+| `components/toggle_group` | `type: :single, variant: :default, size: :default, value:, disabled: false` |
+
+### Parts
+
+| Namespace | Partials |
+|-----------|----------|
+| `alert/` | `components/alert/title`, `components/alert/description` |
+| `breadcrumbs/` | `components/breadcrumbs/list`, `components/breadcrumbs/item`, `components/breadcrumbs/link` (`href:`), `components/breadcrumbs/page`, `components/breadcrumbs/separator` (`icon: :chevron_right`), `components/breadcrumbs/ellipsis` |
+| `calendar/` | `components/calendar/header` (`month:, year:, month_name:`), `components/calendar/week` (`days:, display_month:, selected_date:, selected_end_date:, mode:, min_date:, max_date:, disabled_dates:, show_outside_days:`) |
+| `card/` | `components/card/header` (`layout: :column`), `components/card/title` (`size: :default`), `components/card/description`, `components/card/action`, `components/card/content` (`spacing: :default`), `components/card/footer` (`align: :start, spacing: :default`) |
+| `combobox/` | `components/combobox/trigger` (`for_id:, placeholder: "Select...", variant: :outline, size: :default`), `components/combobox/content` (`id:, align: :start, width: :default`), `components/combobox/input` (`placeholder: "Search..."`), `components/combobox/list`, `components/combobox/option` (`value:, selected: false, disabled: false`), `components/combobox/group`, `components/combobox/label`, `components/combobox/separator`, `components/combobox/empty` (`text: "No results found."`) |
+| `drawer/` | `components/drawer/provider` (`id:, name:, default_open: false, cookie_name: "drawer_state", keyboard_shortcut: "d"`), `components/drawer/trigger` (`variant: :default, size: :default, icon_name:, for_id:`), `components/drawer/content`, `components/drawer/header` (`show_close: true`), `components/drawer/title` (`tag: :h2`), `components/drawer/description` (`tag: :p`), `components/drawer/section`, `components/drawer/separator` (`orientation: :horizontal`), `components/drawer/footer`, `components/drawer/close` (`show_icon: true`) |
+| `dropdown_menu/` | `components/dropdown_menu/trigger` (`variant: :outline, size: :default, as_child: false`), `components/dropdown_menu/content` (`align: :start, side: :bottom, width: :default`), `components/dropdown_menu/item` (`href:, method:, variant: :default, disabled: false`), `components/dropdown_menu/group`, `components/dropdown_menu/label` (`inset: false`), `components/dropdown_menu/separator`, `components/dropdown_menu/shortcut` |
+| `empty/` | `components/empty/header`, `components/empty/media` (`icon:, content:, variant: :icon`), `components/empty/title`, `components/empty/description`, `components/empty/content` |
+| `pagination/` | `components/pagination/content`, `components/pagination/item`, `components/pagination/link` (`href:, active: false, disabled: false`), `components/pagination/previous` and `components/pagination/next` (`href:, label:, disabled: false, show_label: true`), `components/pagination/ellipsis` |
+| `sidebar/` | `components/sidebar/provider` (`id:, default_open: true, variant: :inset, cookie_name: "sidebar_state", keyboard_shortcut: "b"`), `components/sidebar/header`, `components/sidebar/content`, `components/sidebar/footer`, `components/sidebar/group` (`title:`), `components/sidebar/group_action` (`label:, url:, icon_name: :ellipsis`), `components/sidebar/menu`, `components/sidebar/menu_item`, `components/sidebar/menu_button` (`title:, url:, icon_name:, size: :default, active: false`), `components/sidebar/menu_link` (`url: "#", active: false, title:, subtitle:, icon:, text_icon:, icon_classes: ""`), `components/sidebar/menu_action` (`label:, url:, icon_name: :ellipsis, show_on_hover: false`), `components/sidebar/menu_badge`, `components/sidebar/separator` (`orientation: :horizontal`), `components/sidebar/trigger` (`icon_name: :left_panel`), `components/sidebar/inset` |
+| `stats/` | `components/stats/stats_grid` (`cards: [], columns: 3, action:, action_position: :end`), `components/stats/stats_card` (`title:, value:, icon:, subtitle:, icon_classes: "", value_classes: ""`) |
+| `table/` | `components/table/header` (`sticky: false`), `components/table/body`, `components/table/row` (`selected: false`), `components/table/head` (`scope: "col"`), `components/table/cell`, `components/table/footer`, `components/table/caption` |
+| `toast/` | `components/toast/title`, `components/toast/description`, `components/toast/action` (`label:, href:, method:`) |
+| `toggle_group/` | `components/toggle_group/item` (`value:, pressed: false, disabled: false, aria_label:`) |
+
+### Label
+
+New in 0.6.0. Both forms are supported — the partial when you want the engine to build the tag,
+the data attribute when you are already inside a Rails form builder.
+
+```erb
+<%= render "components/label", text: "Email", for_id: "user_email", required: true %>
+
+<%= f.label :email, "Email", data: { component: "label", required: true } %>
+```
+
+### Multiple Drawers on One Page
+
+`drawer/provider` derives a deterministic id from `name:`, and `drawer/trigger` points at one
+with `for_id:`.
+
+```erb
+<%= render "components/drawer/provider", name: "filters" do %>
+  <%= render "components/drawer/trigger", for_id: "drawer-filters", icon_name: :ellipsis %>
+  <%= render "components/drawer", id: "drawer-filters", side: :right do %>
+    <%= render "components/drawer/header" do %>
+      <%= render "components/drawer/title", text: "Filters" %>
+    <% end %>
+  <% end %>
+<% end %>
+```
+
+---
+
+## Shape and Surface Behavior (0.6.0)
+
+Values these components resolve changed in 0.6.0. Nothing renamed — see
+[upgrading-0.6.md](upgrading-0.6.md) for the migration and the revert block.
+
+| Component | What moved |
+|-----------|-----------|
+| Card | Radius 12px → 8px (`--surface-radius`; pin with `--card-radius`) |
+| Sidebar (inset panel, and the header's top corners inside it) | Radius 12px → 8px (`--inset-radius`) |
+| Combobox / Dropdown Menu popovers | Radius 6px → 8px; items 4px → 6px |
+| Toast | Close button radius 4px → 6px; shadow `shadow-lg` → `--elevation-overlay` |
+| Drawer panel, Date Picker popover | Shadow `shadow-lg` → `--elevation-overlay` |
+| Alert, Calendar, Date Picker popover | Paint `--card` / `--popover` instead of `--background` — visible in the default dark theme |
+| Button (`outline`, `ghost`), active Pagination link | Paint `transparent`, so they work inside a card |
+| Button (six variants) | Gained a `:focus-visible` ring they never rendered |
+| Badge (`success`, `warning`, `destructive`) | Lost a stray grey hairline |
+| Table | `[data-variant="bordered"]` now actually matches |
+| Sidebar menu items | Omit `data-active` when inactive; add `aria-current="page"` when active |

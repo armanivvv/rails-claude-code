@@ -1,9 +1,31 @@
 # Form Patterns
 
+> Verified against maquina-components 0.6.1.
+
 **Official Documentation:** https://maquina.app/documentation/components/
+
+> **App-side patterns, not engine API.** The `character-count`, `file-preview` and `money-input`
+> Stimulus controllers, the `form_field` helper and `format_money()` are illustrations of
+> conventions to build in your own app. The gem does not ship them.
 
 
 Building forms with maquina_components, validation, error handling, and common form patterns.
+
+## Labels
+
+0.6.0 added a `components/label` partial alongside the data-attribute form. Use whichever fits
+the surrounding code:
+
+```erb
+<%= f.label :email, "Email", data: { component: "label", required: true } %>
+<%= render "components/label", text: "Email", for_id: "user_email", required: true %>
+```
+
+## Focus Rings
+
+Fields ring on **keyboard focus only** since 0.6.0 — a mouse click no longer draws a ring, and
+the ring is an `outline` read from `--focus-ring-*`. Expect this when reviewing; it is not a
+missing state.
 
 ---
 
@@ -499,10 +521,14 @@ More visual radio selection:
 <% end %>
 ```
 
-### ❌ Avoid: Alert with Error List
+### Migrating from an error-list alert
+
+Inline errors above are the target. If a form still collects its errors into one alert, move
+each message next to its field — the alert form makes users match messages back to inputs
+themselves.
 
 ```erb
-<%# Don't do this - users have to match errors to fields %>
+<%# The older shape, for recognition %>
 <% if @user.errors.any? %>
   <%= render "components/alert", variant: :destructive do %>
     <%= render "components/alert/title", text: t("errors.validation_failed") %>
@@ -683,7 +709,7 @@ Turbo automatically adds `aria-busy="true"` to forms during submission. Use this
 ```erb
 <%= f.button type: :submit, data: { component: "button", variant: "primary" } do %>
   <span class="group-aria-busy:hidden flex items-center gap-2">
-    <%= icon_for :save, class: "size-4" %>
+    <%= icon_for :check, class: "size-4" %>
     <%= t(".save") %>
   </span>
   <span class="hidden group-aria-busy:flex items-center gap-2">

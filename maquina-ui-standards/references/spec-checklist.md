@@ -1,5 +1,7 @@
 # UI Spec Checklist
 
+> Verified against maquina-components 0.6.1.
+
 **Official Documentation:** https://maquina.app/documentation/components/
 
 
@@ -40,7 +42,7 @@ Before writing code, verify you have:
 - [ ] **Cards** use header/content/footer appropriately
 - [ ] **Badges** used for status indicators
 - [ ] **Alerts** used for important messages
-- [ ] Money displayed using `format_money()` helper
+- [ ] Money displayed through the app's own money formatter, consistently
 - [ ] Dates/times displayed using I18n `l()` helper
 - [ ] Times use monospace font (`font-mono`)
 
@@ -291,3 +293,18 @@ ui_implementation:
 | Icons not rendering | Use `icon_for` helper |
 | Form errors not accessible | Add `aria-describedby` to input |
 | Button too small on mobile | Ensure min 44px touch target |
+
+
+---
+
+## Engine Conformance (0.6.0+)
+
+- [ ] `bin/rails maquina:doctor` reports nothing at BREAKING severity
+- [ ] The `theme.css` universal border shim is wrapped in `@layer base`
+- [ ] State selectors match on the value — `[data-active="true"]`, `data-[active=true]:` — since
+      a component omits the attribute when false
+- [ ] Every `css_classes:` in the diff is intentional; utilities apply now, so decoration that
+      was previously inert is live
+- [ ] Every `icon_for` name resolves — either in the built-in roster or through the app's
+      `main_icon_svg_for`, since `strict_icons` raises in development and test
+- [ ] Shape and elevation come from role tokens or a component escape hatch, not literals
