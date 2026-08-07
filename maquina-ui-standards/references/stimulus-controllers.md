@@ -2,6 +2,8 @@
 
 Reference for all Stimulus controllers provided by maquina_components. Controllers are auto-registered via importmap — no manual setup required.
 
+> Verified against maquina-components 0.6.1. This file owns the `window.Toast` JavaScript API.
+
 ---
 
 ## Quick Reference
@@ -316,20 +318,25 @@ Container that manages multiple toast notifications and exposes a global JavaScr
 
 **Global JavaScript API (`window.Toast`):**
 
+The title is the **first positional argument**; everything else is an options hash.
+
 | Method | Parameters | Description |
 |--------|-----------|-------------|
-| `Toast.success(options)` | `{ title, description, duration }` | Success toast |
-| `Toast.error(options)` | `{ title, description, duration }` | Error toast |
-| `Toast.warning(options)` | `{ title, description, duration }` | Warning toast |
-| `Toast.info(options)` | `{ title, description, duration }` | Info toast |
-| `Toast.show(options)` | `{ variant, title, description, duration, dismissible }` | Custom toast |
+| `Toast.success(title, options)` | `{ description, duration, dismissible }` | Success toast |
+| `Toast.error(title, options)` | same | Error toast |
+| `Toast.destructive(title, options)` | same | Alias of `Toast.error` — `:destructive` is the library-wide danger variant |
+| `Toast.warning(title, options)` | same | Warning toast |
+| `Toast.info(title, options)` | same | Info toast |
+| `Toast.show(title, options)` | `{ variant, description, duration, dismissible }` | Custom toast |
 | `Toast.dismiss(id)` | Toast ID | Dismiss specific toast |
 | `Toast.dismissAll()` | — | Dismiss all toasts |
 
+Passing `variant: "destructive"` to `Toast.show` normalizes to `"error"`.
+
 **Usage from JavaScript:**
 ```javascript
-Toast.success({ title: "Saved!", description: "Your changes were saved." })
-Toast.error({ title: "Error", description: "Something went wrong." })
+Toast.success("Saved!", { description: "Your changes were saved." })
+Toast.error("Error", { description: "Something went wrong." })
 ```
 
 ---

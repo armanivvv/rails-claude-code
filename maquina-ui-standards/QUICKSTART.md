@@ -32,14 +32,15 @@ Build Rails UIs with maquina_components — server-rendered ERB partials with Ta
 
 | File | Purpose |
 |------|---------|
-| `agents/maquina-ui-standards.md` | Core principles, decision framework |
+| `skills/ui/SKILL.md` | Core principles, decision framework |
 | `references/component-catalog.md` | All components with props and examples |
-| `references/helpers-reference.md` | All 11 Ruby helper modules with complete APIs |
+| `references/helpers-reference.md` | All 12 Ruby helper modules with complete APIs |
 | `references/stimulus-controllers.md` | All Stimulus controllers reference |
-| `references/installation-guide.md` | Setup, CSS architecture, theme, icons |
+| `references/installation-guide.md` | Setup, CSS layers, theme tokens, icon roster, `maquina:doctor` |
 | `references/form-patterns.md` | Forms, validation, field groups |
 | `references/layout-patterns.md` | Grids, responsive, page structure |
 | `references/turbo-integration.md` | Frames, Streams, Morph patterns |
+| `references/upgrading-0.6.md` | Migrating an app from maquina-components 0.5.x |
 | `references/spec-checklist.md` | UI review checklist |
 
 ## Component Categories

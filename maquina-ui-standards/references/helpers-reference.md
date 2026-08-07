@@ -1,6 +1,8 @@
 # Helpers Reference
 
-Complete API reference for all 11 Ruby helper modules in maquina_components. These helpers provide ergonomic shortcuts — prefer them over multi-partial composition for complex interactive components.
+Complete API reference for all 12 Ruby helper modules in maquina_components. These helpers provide ergonomic shortcuts — prefer them over multi-partial composition for complex interactive components.
+
+> Verified against maquina-components 0.6.1. All helpers are auto-included in host apps.
 
 ---
 
@@ -111,6 +113,12 @@ Formats a date range for display.
 
 Searchable select with autocomplete. Provides both a simple data-driven API and a block-based builder for full control.
 
+> **The helper and the partial name two arguments differently, deliberately.** The helpers take
+> `value:` and `empty_text:`; the underlying `combobox/option` and `combobox/empty` partials take
+> `selected:` and `text:`. Use whichever layer you are calling.
+
+`combobox_simple` rendered an empty popover before 0.6.0; it works now.
+
 ### `combobox_simple(options:, placeholder: "Select...", search_placeholder: "Search...", empty_text: "No results found.", value: nil, name: nil, trigger_options: {}, content_options: {})`
 
 Quick path for data-driven comboboxes.
@@ -196,6 +204,8 @@ Accessible dropdown menus with keyboard navigation. Simple API for data-driven m
 
 ### `dropdown_menu_simple(trigger_text, items:, trigger_options: {}, content_options: {})`
 
+This raised `NoMethodError` on its first item before 0.6.0; it works now.
+
 Quick path for data-driven menus.
 
 | Parameter | Type | Default | Description |
@@ -210,7 +220,7 @@ Quick path for data-driven menus.
 ```erb
 <%= dropdown_menu_simple "Actions", items: [
   { label: "Edit", href: edit_item_path(@item), icon: :pencil },
-  { label: "Duplicate", href: duplicate_item_path(@item), icon: :copy },
+  { label: "Duplicate", href: duplicate_item_path(@item), icon: :clipboard_list },
   { label: "Delete", href: item_path(@item), method: :delete, variant: :destructive, icon: :trash }
 ] %>
 ```
@@ -247,7 +257,7 @@ Block form with full builder control.
   <% menu.content(align: :end) do |content| %>
     <% content.label("Actions") %>
     <% content.item("Edit", href: edit_path, icon: :pencil) %>
-    <% content.item(href: duplicate_path, icon: :copy) do |item| %>
+    <% content.item(href: duplicate_path, icon: :clipboard_list) do |item| %>
       Duplicate
       <% item.shortcut("⌘D") %>
     <% end %>
@@ -318,6 +328,9 @@ Pre-built empty state for search results.
 
 ### `empty_list_state(resource_name:, new_path: nil, icon: :folder_open, size: :default)`
 
+> The `:folder_open` default is not a built-in icon name. Under `strict_icons` it raises unless
+> your app's `main_icon_svg_for` resolves it — pass an explicit `icon:` or define it there.
+
 Pre-built empty state for empty collections.
 
 | Parameter | Type | Default | Description |
@@ -372,7 +385,10 @@ end
 
 ### Built-in Icons
 
-`dollar`, `users`, `credit_card`, `activity`, `trend_up`, `trend_down`, `clock`, `money`, `line_chart`, `piggy_bank`, `arrow_left`, `select_chevron`, `check`, `circle_alert`, `logout`, `chevron_up_down`, `chevron_right`, `chevron_left`, `left_panel`, `ellipsis`, `calendar`, `info`, `triangle_alert`, `check_circle`, `arrow_right`, `slash`, `inbox`, `folder`, `search`, `upload`, `user`, `log_out`, `more_horizontal`, `settings`, `mail`, `download`, `trash`, `pencil`, `home`, `layout_dashboard`, `align_left`, `align_center`, `align_right`, `bold`, `italic`, `underline`, `list`, `grid`
+The roster of 56 names lives in
+[installation-guide.md](installation-guide.md#default-built-in-icons) — check there before
+using a name. Under `strict_icons` (on in development and test) an unresolvable name raises
+`MaquinaComponents::UnknownIconError` rather than rendering nothing.
 
 ---
 
@@ -560,7 +576,8 @@ FLASH_VARIANTS = {
 
 ---
 
-**JavaScript API (from the toaster controller):** `Toast.success/info/warning/error/destructive(title, options)`, `Toast.show`, `Toast.dismiss(id)`, `Toast.dismissAll()`. `Toast.destructive` is an alias of `Toast.error` — `:destructive` is the library-wide danger variant.
+**JavaScript API:** documented in
+[stimulus-controllers.md](stimulus-controllers.md#toaster-controller).
 
 ---
 

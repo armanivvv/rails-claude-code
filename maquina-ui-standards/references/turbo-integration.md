@@ -1,5 +1,7 @@
 # Turbo Integration
 
+> Verified against maquina-components 0.6.1.
+
 **Official Documentation:** https://maquina.app/documentation/components/
 
 
@@ -83,7 +85,7 @@ Add progress indicator:
         </div>
         <%= link_to edit_service_path(@service), 
             data: { component: "button", variant: "ghost", size: "icon-sm" } do %>
-          <%= icon_for :edit, class: "size-4" %>
+          <%= icon_for :pencil, class: "size-4" %>
         <% end %>
       </div>
     <% end %>
@@ -523,7 +525,7 @@ end
   <%= render "components/dropdown_menu/content" do %>
     <%# Regular navigation %>
     <%= render "components/dropdown_menu/item", href: edit_booking_path(@booking) do %>
-      <%= icon_for :edit, class: "size-4" %> Edit
+      <%= icon_for :pencil, class: "size-4" %> Edit
     <% end %>
     
     <%# Turbo method %>

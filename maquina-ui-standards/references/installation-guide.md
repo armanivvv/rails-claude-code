@@ -2,12 +2,18 @@
 
 How to install and configure maquina_components in a Rails application.
 
+> Verified against maquina-components 0.6.1.
+
 ---
 
 ## Prerequisites
 
-- Ruby on Rails 7.1+
-- [tailwindcss-rails](https://github.com/rails/tailwindcss-rails) gem installed with `app/assets/tailwind/application.css` present
+- Ruby on Rails 7.2+
+- [tailwindcss-rails](https://github.com/rails/tailwindcss-rails) `~> 4.2`, with `app/assets/tailwind/application.css` present
+- importmap-rails `>= 1.2` and stimulus-rails `>= 1.3` (pulled in as gem dependencies)
+
+The gem is named with a hyphen (`maquina-components`) even though the module and repository use
+the underscore (`MaquinaComponents`, `maquina_components`).
 
 ---
 
@@ -37,6 +43,9 @@ bin/rails generate maquina_components:install
 | `--skip-theme` | Skip adding theme CSS variables |
 | `--skip-helper` | Skip creating the icon helper file |
 
+The generator is **idempotent** — re-run it after a gem upgrade to pick up new token blocks. It
+appends each marker-guarded block once and leaves an existing palette untouched.
+
 ### 3. What the Generator Creates
 
 1. **CSS import** — Injects after `@import "tailwindcss"` in `app/assets/tailwind/application.css`:
@@ -46,7 +55,10 @@ bin/rails generate maquina_components:install
 
 2. **Theme variables** — Appends `:root` and `@theme` blocks with OKLCH color variables (unless `--skip-theme`)
 
-3. **Icon helper** — Creates `app/helpers/maquina_components_helper.rb` with `main_icon_svg_for` override point (unless `--skip-helper`)
+3. **Shape and state tokens** — Appends the marker-guarded `shape_state_tokens.css` block with
+   the radius, focus, elevation, mark and weight tokens (unless `--skip-theme`)
+
+4. **Icon helper** — Creates `app/helpers/maquina_components_helper.rb` with `main_icon_svg_for` override point (unless `--skip-helper`)
 
 ---
 
@@ -71,9 +83,45 @@ maquina_components uses **data-attribute selectors** for all component styling:
 
 **Key patterns:**
 - `@apply` for spacing and typography utilities
-- Explicit CSS for theme variable colors (not Tailwind utility classes)
-- Data attributes for structure, variants, and state — not CSS classes
-- No `dark:` prefixes — dark mode handled entirely via CSS variable switching
+- Explicit CSS for theme variable colors, resolved from variables rather than utility classes
+- Data attributes carry structure, variants, and state; classes stay free for layout
+- Dark mode switches CSS variable values — author one rule and let the theme resolve it
+
+### The layered engine
+
+As of 0.6.0 every engine rule lives in `@layer components`, flattened to specificity 0,1,0 via
+`:where()`. Two consequences shape how you write app CSS:
+
+**A utility passed as `css_classes:` applies.** It used to be silently swallowed. Audit what
+your views already pass — decoration you never saw is now live.
+
+**Unlayered CSS outranks every layer, at any specificity.** One unlayered `*` rule beats every
+component rule in the engine. The generator-installed border shim must therefore be layered:
+
+```css
+/* Wrong — flattens the tinted borders on every alert and toast variant */
+* { border-color: var(--color-border); }
+
+/* Right */
+@layer base {
+  * { border-color: var(--color-border); }
+}
+```
+
+App CSS that intentionally overrides a component belongs in a layer declared after
+`components`, or unlayered if you mean it to win unconditionally. `bin/rails maquina:doctor`
+reports unlayered rules that look accidental.
+
+### Presence selectors on state attributes
+
+A component omits a state attribute rather than writing a falsy value, so match on the value:
+
+```css
+/* Matches nothing since 0.6.0 */ [data-sidebar-part="menu-button"][data-active] { }
+/* Correct */                     [data-sidebar-part="menu-button"][data-active="true"] { }
+```
+
+The Tailwind form is `data-[active=true]:` rather than `data-[active]:`.
 
 ---
 
@@ -117,9 +165,67 @@ Variables are defined in two places for Tailwind CSS 4 compatibility:
 
 **Sidebar Variables:** `--sidebar`, `--sidebar-foreground`, `--sidebar-primary`, `--sidebar-primary-foreground`, `--sidebar-accent`, `--sidebar-accent-foreground`, `--sidebar-border`, `--sidebar-ring`
 
+### Shape, Focus and Elevation Tokens
+
+As of 0.6.0 shape, focus rings, elevation and weight are variables too — which is the whole of
+what used to require override CSS. **A theme changes values, not selectors.**
+
+**Role tokens** restyle a whole class of component at once:
+
+| Token | Default | Applies to |
+|-------|---------|------------|
+| `--control-radius` | `0.375rem` | Buttons, inputs, selects, textareas, badges, menu items, pagination links, calendar days, sidebar items |
+| `--surface-radius` | `0.5rem` | Cards, alerts, popovers, toasts, tables, stats, empty, calendar, drawer, sidebar inset |
+| `--mark-radius` | `4px` | The checkbox box |
+| `--pill-radius` | `calc(infinity * 1px)` | Radio, switch track |
+| `--focus-ring-width` | `3px` | Every focus ring |
+| `--focus-ring-offset` | `0px` | Every focus ring |
+| `--focus-ring-style` | `solid` | Every focus ring |
+| `--focus-ring-color` | `var(--ring)` | Every focus ring; invalid fields override with the destructive tint |
+| `--elevation-control` | `shadow-xs` | Inputs, selects, textareas, checkbox, radio |
+| `--elevation-raised` | `shadow-sm` | Cards, stats cards, floating sidebar, every filled button |
+| `--elevation-overlay` | `shadow-md` | Dropdown and combobox popovers, date-picker popover, toasts, drawer panel |
+| `--elevation-none` | `none` | Ghost and link buttons, the inset sidebar |
+| `--label-weight` | `500` | Labels, buttons |
+| `--value-weight` | `700` | Stat values |
+| `--control-fill` | `transparent` | Field background; re-set under `.dark` |
+
+**Mark tokens** carry the control glyphs: `--checkbox-mark-image`,
+`--checkbox-indeterminate-image`, `--radio-mark-image`, `--switch-thumb-image`,
+`--select-chevron-image`. Point one at your own SVG data URI rather than restating the rule.
+
+**Escape hatches** pin exactly one component without redefining a role — `--card-radius`,
+`--alert-radius`, `--badge-radius`, `--button-radius`, `--input-radius`, `--inset-radius`,
+`--combobox-radius`, `--combobox-item-radius`, `--dropdown-menu-radius`,
+`--dropdown-menu-item-radius`, `--toast-radius`, `--toast-close-radius`, `--table-radius`,
+`--sidebar-radius`, `--sidebar-item-radius`, `--pagination-radius`, `--stats-radius`, and the
+matching `*-shadow` set (`--card-shadow`, `--toast-shadow`, `--toast-hover-shadow`,
+`--drawer-shadow`, `--date-picker-popover-shadow`, `--combobox-shadow`,
+`--dropdown-menu-shadow`, `--stats-shadow`).
+
+A flat theme is six lines:
+
+```css
+:root {
+  --elevation-control: none;
+  --elevation-raised: none;
+  --elevation-overlay: none;
+  --elevation-none: none;
+  --control-radius: 0.25rem;
+  --surface-radius: 0.25rem;
+}
+```
+
+Declare these in a plain, unlayered `:root` block — that is what the installer generates, and
+unlayered CSS wins over the engine's `@theme` defaults whatever the import order. Wrapping them
+in `@theme` emits into `@layer theme` alongside the engine's own defaults, where source order
+becomes the only tie-breaker. Keep the names as they are: renaming them into Tailwind's
+`--radius-*` / `--shadow-*` namespaces means an app-side `@theme { --radius-*: initial }` wipes
+them.
+
 ### Dark Mode
 
-Dark mode is handled via CSS variables — switching the `.dark` class on `<html>` changes all variables automatically. No `dark:` Tailwind prefixes needed in your templates.
+Dark mode is handled via CSS variables — switching the `.dark` class on `<html>` changes all variables automatically. Author one rule and let the theme resolve it, rather than pairing a light rule with a `dark:` twin.
 
 ```css
 :root {
@@ -161,11 +267,47 @@ Controllers become available as `data-controller="sidebar"`, `data-controller="c
 
 ### Default: Built-in Icons
 
-The gem includes 40+ built-in SVG icons (Lucide-style). Use `icon_for`:
+The gem ships 56 built-in SVG icons (Lucide-style). Use `icon_for`:
 
 ```erb
 <%= icon_for :check, class: "size-4" %>
 ```
+
+**This list is the single source of truth for icon names.** Under `strict_icons` a name outside
+it raises rather than rendering nothing, so check here before using one:
+
+`activity`, `align_center`, `align_left`, `align_right`, `arrow_down`, `arrow_left`,
+`arrow_right`, `arrow_up`, `bold`, `briefcase`, `calendar`, `chart_bar`, `check`,
+`check_circle`, `chevron_left`, `chevron_right`, `chevron_up_down`, `circle_alert`,
+`circle_check`, `circle_x`, `clipboard_list`, `clock`, `credit_card`, `dollar`, `download`,
+`ellipsis`, `folder`, `grid`, `home`, `inbox`, `info`, `italic`, `layout_dashboard`,
+`left_panel`, `lightning_bolt`, `line_chart`, `list`, `log_out`, `logout`, `mail`,
+`message_square`, `money`, `more_horizontal`, `pencil`, `piggy_bank`, `search`,
+`select_chevron`, `settings`, `slash`, `trash`, `trend_down`, `trend_up`, `triangle_alert`,
+`underline`, `upload`, `user`, `users`, `x`
+
+`:alert_triangle` is accepted as an alias of `:triangle_alert`.
+
+**Common names that are *not* built in** and need an app-side `main_icon_svg_for` entry:
+`plus`, `sun`, `moon`, `copy`, `edit`, `panel_left`, `trending_up`, `folder_open`. Several are
+Lucide names whose engine spelling differs — `pencil` for edit, `left_panel` for panel_left,
+`trend_up` for trending_up.
+
+> `empty_list_state` defaults to `icon: :folder_open`, which is not in the roster. Under
+> `strict_icons` that default raises unless your app's `main_icon_svg_for` resolves it — pass an
+> explicit `icon:` or define `folder_open` in the override.
+
+### Strict Icons
+
+```ruby
+# config/initializers/maquina_components.rb
+MaquinaComponents.strict_icons = false  # fall back to rendering nothing
+```
+
+`strict_icons` defaults to `Rails.env.local?` — on in development and test, off in production.
+When on, `icon_for` raises `MaquinaComponents::UnknownIconError` for a name that resolves to no
+SVG, instead of silently rendering nothing. Anything the app's `main_icon_svg_for` resolves
+counts, so a custom icon system satisfies it.
 
 ### Custom Icon System
 
@@ -207,3 +349,27 @@ def app_sidebar_closed?(cookie_name = "sidebar_state")
   sidebar_closed?(cookie_name)
 end
 ```
+
+---
+
+## Verifying an Install: `maquina:doctor`
+
+```bash
+bin/rails maquina:doctor
+```
+
+Reads your CSS, views and JavaScript and prints file:line for every pattern the current release
+changes, grouped BREAKING / REVIEW / CLEANUP. It never edits anything and never fails a build.
+
+| Rule id | Severity | What it finds |
+|---------|----------|---------------|
+| `unlayered-universal-rule` | breaking | An unlayered `*` rule — typically the `theme.css` border shim |
+| `data-active-presence` | breaking | `[data-active]` presence selectors and `data-[active]:` utilities |
+| `restated-svg-uri` | breaking | An app-restated control mark SVG that should read a `*-image` token |
+| `hardcoded-radius` | review | A literal radius where a role token now applies |
+| `hardcoded-shadow` | review | A literal shadow where an elevation token now applies |
+| `dark-twin-rule` | review | A `.dark`-duplicated rule that a token value would cover |
+| `unlayered-component-rule` | cleanup | App CSS targeting a component from outside a layer |
+| `inline-shape-utility` | cleanup | A shape utility inline in a view that belongs in a token |
+
+Every rule id is explained in [upgrading-0.6.md](upgrading-0.6.md).

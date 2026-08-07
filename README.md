@@ -29,7 +29,7 @@ A collection of Claude Code plugins for Ruby on Rails development.
 |--------|-------------|---------|
 | [rails-simplifier](#1-rails-simplifier) | Code quality following 37signals patterns | 1.1.0 |
 | [rails-upgrade-assistant](#2-rails-upgrade-assistant) | Rails 6.0→8.1 upgrade planning | 1.2.0 |
-| [maquina-ui-standards](#3-maquina-ui-standards) | UI components with maquina_components | 0.4.4 |
+| [maquina-ui-standards](#3-maquina-ui-standards) | UI components with maquina_components | 0.6.0 |
 | [recuerd0](#4-recuerd0) | Knowledge management from AI conversations | 1.4.0 |
 | [mvp-creator](#5-mvp-creator) | MVP documentation for Rails applications | 1.1.0 |
 | [better-stimulus](#6-better-stimulus) | StimulusJS best practices from betterstimulus.com | 1.1.0 |
@@ -185,10 +185,14 @@ Build consistent, accessible UIs in Rails using **maquina_components** — ERB p
 
 | Reference | Purpose |
 |-----------|---------|
-| Component catalog | All 15+ components with ERB examples |
+| Component catalog | Every component with ERB examples, plus the complete partial index |
+| Helpers reference | All 12 Ruby helper modules with complete APIs |
 | Form patterns | Validation, error handling, inline layouts |
 | Layout patterns | Sidebar navigation, page structure |
 | Turbo integration | Frames, Streams, component updates |
+| Stimulus controllers | Component JavaScript, targets, values, the `Toast` API |
+| Installation guide | Setup, CSS layers, theme tokens, icon roster, `maquina:doctor` |
+| Upgrading 0.6 | Migrating an app from maquina-components 0.5.x |
 | Spec checklist | Review criteria for UI quality |
 
 ### Usage
@@ -215,7 +219,8 @@ Build consistent, accessible UIs in Rails using **maquina_components** — ERB p
 <% end %>
 
 <%# Data-attribute components (forms) %>
-<%= form.text_field :name, data: { field: true } %>
+<%= form.text_field :name, data: { component: "input" }, required: true, maxlength: 100 %>
+<%= form.submit "Save", data: { component: "button", variant: "primary" } %>
 ```
 
 ### Package Contents
