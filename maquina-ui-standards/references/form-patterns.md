@@ -1,6 +1,6 @@
 # Form Patterns
 
-> Verified against maquina-components 0.6.1.
+> Verified against maquina-components 0.7.0.
 
 **Official Documentation:** https://maquina.app/documentation/components/
 

@@ -2,7 +2,7 @@
 
 Reference for all Stimulus controllers provided by maquina_components. Controllers are auto-registered via importmap — no manual setup required.
 
-> Verified against maquina-components 0.6.1. This file owns the `window.Toast` JavaScript API.
+> Verified against maquina-components 0.7.0. This file owns the `window.Toast` JavaScript API.
 
 ---
 

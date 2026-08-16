@@ -2,7 +2,7 @@
 
 How to install and configure maquina_components in a Rails application.
 
-> Verified against maquina-components 0.6.1.
+> Verified against maquina-components 0.7.0.
 
 ---
 
@@ -181,7 +181,7 @@ what used to require override CSS. **A theme changes values, not selectors.**
 | `--focus-ring-width` | `3px` | Every focus ring |
 | `--focus-ring-offset` | `0px` | Every focus ring |
 | `--focus-ring-style` | `solid` | Every focus ring |
-| `--focus-ring-color` | `var(--ring)` | Every focus ring; invalid fields override with the destructive tint |
+| `--focus-ring-color` | *per family, see below* | Every focus ring; invalid fields and destructive buttons override with the destructive tint |
 | `--elevation-control` | `shadow-xs` | Inputs, selects, textareas, checkbox, radio |
 | `--elevation-raised` | `shadow-sm` | Cards, stats cards, floating sidebar, every filled button |
 | `--elevation-overlay` | `shadow-md` | Dropdown and combobox popovers, date-picker popover, toasts, drawer panel |
@@ -189,6 +189,29 @@ what used to require override CSS. **A theme changes values, not selectors.**
 | `--label-weight` | `500` | Labels, buttons |
 | `--value-weight` | `700` | Stat values |
 | `--control-fill` | `transparent` | Field background; re-set under `.dark` |
+
+
+`--focus-ring-color` is the one token with no single default. It is declared nowhere; each rule
+supplies its own fallback, because the right resting colour differs by family:
+
+| Family | Default when the token is unset |
+|---|---|
+| Buttons, cards, badges, toasts, drawer, pagination, calendar, toggle group, date picker | `var(--ring)` |
+| Everything inside the sidebar, and the menu button | `var(--sidebar-ring, var(--ring))` |
+| Form fields — input, textarea, select, checkbox, radio | `color-mix(in oklch, var(--ring) 50%, transparent)` |
+
+Setting it once at `:root` overrides all three, since a declared token means no fallback fires.
+Two states outrank a `:root` override on purpose — an `aria-invalid` field and a
+`data-variant="destructive"` button declare it on the element itself, and an element's own custom
+property beats an inherited one.
+
+**Never transition `outline-color`** in a component of your own, and that means never using
+Tailwind's `transition-colors`, which folds `outline-color` in as of v4. A transitioned ring
+animates from its pre-focus value — the initial `currentColor`, i.e. the control's own text colour —
+so on a filled variant it is a near-white ring for the first 150ms, which is no focus indicator at
+all. It also makes a `getComputedStyle` read taken right after a `Tab` press report the previous
+colour. Name the properties instead:
+`transition-property: color, background-color, border-color, text-decoration-color`.
 
 **Mark tokens** carry the control glyphs: `--checkbox-mark-image`,
 `--checkbox-indeterminate-image`, `--radio-mark-image`, `--switch-thumb-image`,

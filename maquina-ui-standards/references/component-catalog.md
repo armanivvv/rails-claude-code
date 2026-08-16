@@ -2,7 +2,7 @@
 
 Complete reference for all maquina_components. Each entry includes when to use, props, variants, and examples.
 
-> Verified against maquina-components 0.6.1. The canonical variant and size vocabulary lives in
+> Verified against maquina-components 0.7.0. The canonical variant and size vocabulary lives in
 > [SKILL.md](../skills/ui/SKILL.md#core-rules); this file follows it.
 
 **Official Documentation:** https://maquina.app/documentation/components/
@@ -602,27 +602,34 @@ Navigation trail showing page hierarchy.
 <%# Simple breadcrumbs from a hash %>
 <%= breadcrumbs({ "Home" => root_path, "Users" => users_path }, @user.name) %>
 
-<%# Responsive — collapses middle items on overflow %>
+<%# Responsive — collapses middle items only when they do not fit %>
 <%= responsive_breadcrumbs(
   { "Home" => root_path, "Settings" => settings_path, "Team" => team_path },
   "Members"
 ) %>
-
-<%# Responsive with forced collapse — show first + last only %>
-<%= responsive_breadcrumbs(
-  { "Home" => root_path, "Settings" => settings_path, "Team" => team_path },
-  "Members",
-  collapse_after: 2
-) %>
 ```
 
-**`collapse_after` parameter:** Forces collapse by item count, solving cases where CSS text truncation absorbs overflow before JS can detect it. `collapse_after: 2` = first + last only, `3` = first + one middle + last. Default `0` = pure overflow detection.
+**Collapsing is measured, not guessed.** Items collapse only when the trail does not fit its
+container and re-expand when it does; the measurement watches the container, so a sidebar collapse
+re-fits the trail without a window resize. Hidden items are reachable through the ellipsis, which
+opens a popover listing them as links.
+
+**`collapse_after` is deprecated as of 0.7.0** — accepted, ignored, removed in 0.8.0. It collapsed
+on item count without consulting available width, so it also collapsed a trail with room to spare.
+Delete it from existing calls; never add it to new ones.
 
 ---
 
 ### Dropdown Menu
 
-Accessible dropdown with keyboard navigation.
+Accessible dropdown with keyboard navigation. The default trigger renders its own chevron, which
+rotates 180° while the menu is open — reach for `as_child` when you need different content (an
+icon-only button, an `sr-only` label), not to supply an affordance. `as_child` hands you the whole
+button, so `data-dropdown-menu-target="trigger"`, `data-action="dropdown-menu#toggle"`,
+`aria-haspopup` and `aria-expanded` all become yours to write; the controller updates
+`aria-expanded` at runtime only if the attribute is already there.
+
+The combobox trigger renders its own chevron too, and the combobox search field rings on focus.
 
 **When to Use:**
 - Action menus
@@ -1388,6 +1395,8 @@ fallback.
 | `components/pagination` | — |
 | `components/separator` | `orientation: :horizontal` |
 | `components/sidebar` | `id:, state: :collapsed, collapsible: :offcanvas, variant: :inset, side: :left` |
+
+> **Sidebar accessibility (0.7.0):** a collapsed off-canvas sidebar carries `inert` on its container, so keyboard focus skips it rather than walking through off-screen destinations — applied server-side as well as by the controller. A `collapsible: :icon` sidebar is a visible rail and stays reachable. Below 768px the sidebar reserves no layout: the gap collapses to zero structurally, before any JavaScript runs. Do not reimplement either in an app.
 | `components/simple_table` | `collection:, columns:, caption:, variant:, table_variant:, empty_message: "No data available", row_id:, html_options: {}` |
 | `components/table` | `container: true, variant:, table_variant:` |
 | `components/toast` | `variant: :default, title:, description:, icon:, duration: 5000, dismissible: true, content:` |

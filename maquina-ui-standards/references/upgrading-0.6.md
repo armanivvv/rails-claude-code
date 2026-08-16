@@ -1,6 +1,25 @@
 # Upgrading to maquina-components 0.6
 
-> Verified against maquina-components 0.6.1.
+> Verified against maquina-components 0.7.0.
+
+## 0.6.1 → 0.7.0
+
+No breaking changes — an accessibility release. Focus rings appear instantly instead of fading in
+from the control's own text colour (every component painting a token ring carried
+`transition-colors`, and Tailwind v4 folds `outline-color` into it); the dropdown and combobox
+triggers gain chevrons they never had; a collapsed off-canvas sidebar leaves the tab order and
+stops reserving layout below 768px; and breadcrumbs collapse on available space rather than item
+count.
+
+One deprecation: `collapse_after` on `responsive_breadcrumbs` is accepted, ignored, and removed in
+0.8.0 — delete it from calls. Host-side workarounds you can now delete: restated button focus
+rings (especially `box-shadow` ones on filled variants), low-specificity `:focus-visible`
+baselines, breadcrumb ring restorations, sidebar `inert` controllers, and unlayered
+`@media (width < 768px)` sidebar-gap rules.
+
+---
+
+## 0.5.1 → 0.6.0
 
 Everything 0.6.0 changed is **behavioral**. No partial, helper, or component was renamed or
 removed, so nothing raises — the failures are silent and visual. Read this before upgrading an

@@ -7,8 +7,10 @@ description: Build consistent, accessible UIs in Rails using maquina_components.
 
 Build production-quality Rails UIs with maquina_components — ERB partials styled with Tailwind CSS 4 and data attributes, inspired by shadcn/ui.
 
-> Verified against maquina-components 0.6.1. Upgrading an app from 0.5.x? Read
+> Verified against maquina-components 0.7.0. Upgrading an app from 0.5.x? Read
 > [upgrading-0.6.md](../../references/upgrading-0.6.md) first — 0.6.0 changed behavior silently.
+> 0.7.0 broke nothing, but it deprecated `collapse_after` on `responsive_breadcrumbs` and fixed
+> focus-ring timing; never transition `outline-color` in a component of your own.
 
 **Official documentation:** https://maquina.app/documentation/components/
 

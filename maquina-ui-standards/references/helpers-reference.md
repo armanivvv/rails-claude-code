@@ -2,7 +2,7 @@
 
 Complete API reference for all 12 Ruby helper modules in maquina_components. These helpers provide ergonomic shortcuts — prefer them over multi-partial composition for complex interactive components.
 
-> Verified against maquina-components 0.6.1. All helpers are auto-included in host apps.
+> Verified against maquina-components 0.7.0. All helpers are auto-included in host apps.
 
 ---
 
@@ -33,31 +33,33 @@ Generates breadcrumb navigation from a hash of links.
 <%= breadcrumbs({ "Home" => root_path, "Users" => users_path }, @user.name) %>
 ```
 
-### `responsive_breadcrumbs(links = {}, current_page = nil, css_classes: "", collapse_after: 0)`
+### `responsive_breadcrumbs(links = {}, current_page = nil, css_classes: "")`
 
-Same API as `breadcrumbs` but collapses middle items into a dropdown on overflow. When `collapse_after` is set, also forces collapse by item count regardless of overflow.
+Same API as `breadcrumbs`, but middle items collapse into an ellipsis dropdown **when the trail does
+not fit its container**, and come back when it does. The controller measures against the container —
+not the window — so a breadcrumb inside a collapsing sidebar or a resizing panel re-fits when that
+panel moves. Items hide from the first one inward, so the ellipsis always stands for the items
+directly behind it. A current-page title too long to help by collapsing truncates with an ellipsis
+as a last resort.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `links` | Hash | `{}` | `{ "Label" => path }` pairs |
 | `current_page` | String | `nil` | Current page label (not a link) |
 | `css_classes` | String | `""` | Additional CSS classes |
-| `collapse_after` | Integer | `0` | Max visible items (first + last count). `0` = pure overflow detection. `2` = show first + last only. `3` = first + one middle + last. |
+| `collapse_after` | Integer | — | **Deprecated in 0.7.0, accepted and ignored, removed in 0.8.0.** Do not add it to new code; delete it from existing calls |
 
 ```erb
-<%# Pure overflow detection (default) %>
 <%= responsive_breadcrumbs(
   { "Home" => root_path, "Settings" => settings_path, "Team" => team_path },
   "Members"
 ) %>
-
-<%# Force collapse — always show first + last, collapse middle %>
-<%= responsive_breadcrumbs(
-  { "Home" => root_path, "Settings" => settings_path, "Team" => team_path },
-  "Members",
-  collapse_after: 2
-) %>
 ```
+
+> `collapse_after` existed only because the width measurement never fired before 0.7.0: the last
+> item was flex-shrinkable, so it absorbed the overflow and the row reported a perfect fit at every
+> width. The threshold faked collapsing by counting items, which also collapsed a trail with plenty
+> of room. Measurement works now.
 
 ---
 
@@ -364,9 +366,24 @@ Primary icon method. Checks your app's `main_icon_svg_for` override first, falls
 <%= icon_for :chevron_right, class: "size-4 text-muted-foreground" %>
 ```
 
+`MaquinaComponents.strict_icons` — on by default in development and test, off in production —
+raises `UnknownIconError` on an unknown name instead of rendering nothing, so a typo fails loudly
+while you work and can never take a page down for a user.
+
 ### `builtin_icon_for(name, options = {})`
 
-Directly access engine's built-in icons, bypassing your app override.
+The engine's own built-in set, bypassing your app override. This is what every component uses for
+the icons it renders *for itself* — a dropdown trigger's chevron, the toast close button, the
+calendar's arrows — so a component looks the same in every app regardless of how icons are
+configured, and a partial override cannot leave a control without its affordance.
+
+**Consequence worth knowing:** if a component's own icon is wrong or missing, defining that name in
+`main_icon_svg_for` will not fix it. That is an engine bug — report it upstream. Two components
+shipped chevron-less for exactly this reason before 0.7.0, and the error message used to send you
+to the override that could not help.
+
+As of 0.7.0 it also honours `strict_icons`, raising `UnknownIconError` rather than silently
+rendering nothing.
 
 ### `main_icon_svg_for(name)`
 
