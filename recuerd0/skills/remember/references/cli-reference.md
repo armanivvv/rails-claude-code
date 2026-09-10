@@ -54,13 +54,13 @@ recuerd0 workspace create --name NAME [--description DESC]
 recuerd0 workspace update <id> [--name NAME] [--description DESC]
 recuerd0 workspace archive <id>
 recuerd0 workspace unarchive <id>
-recuerd0 workspace context <id> [--limit N] [--no-body] [--max-body-chars N]
+recuerd0 workspace context <id> [--limit N] [--no-body] [--max-body-chars N] [--include obsolete]
 ```
 
 ### Memories
 
 ```bash
-recuerd0 memory list [--workspace ID] [--page N] [--category CAT]
+recuerd0 memory list [--workspace ID] [--page N] [--category CAT] [--include obsolete]
 recuerd0 memory show [--workspace ID] <memory_id>
 recuerd0 memory create [--workspace ID] [--title TITLE] [--content CONTENT | --content -] [--source SRC] [--tags tag1,tag2] [--category CAT]
 recuerd0 memory update [--workspace ID] <memory_id> [--title T] [--content C | --content -] [--source S] [--tags T] [--category CAT]
@@ -81,6 +81,7 @@ recuerd0 memory read grep <memory_id> <pattern> [--context N] [--before N] [--af
 
 - `--workspace` falls back to the workspace in `.recuerd0.yaml` or `RECUERD0_WORKSPACE`
 - `--content -` reads content from stdin (supported in create, update, and version create)
+- `--include obsolete` un-hides retired memories on `memory list`, `search`, and `workspace context` (see Obsolete memories)
 
 ### Memory Versions
 
@@ -91,7 +92,7 @@ recuerd0 memory version create [--workspace ID] <memory_id> [--title T] [--conte
 ### Search
 
 ```bash
-recuerd0 search <query> [--workspace ID] [--page N] [--category CAT]
+recuerd0 search <query> [--workspace ID] [--page N] [--category CAT] [--include obsolete]
 ```
 
 Search is backed by SQLite FTS5 and supports operators:
@@ -105,6 +106,32 @@ recuerd0 search '"error handling"'         # phrase
 recuerd0 search "title:authentication"     # field-specific
 recuerd0 search "body:caching"
 ```
+
+### Obsolete memories
+
+A memory tagged `obsolete`, `superseded`, or `deprecated` is retired knowledge. `memory list`, `search`, and `workspace context` **exclude it by default**, so what you get back is what still applies. Matching is case-insensitive and whole-tag: `Superseded` counts, `deprecated-api` stays an ordinary topic tag.
+
+```bash
+# Retire a reversed decision — tag its current version, do not delete it
+recuerd0 memory version create --workspace 1 42 --category decision --tags "auth,superseded" --content -
+
+# Default: current knowledge only
+recuerd0 memory list --workspace 1
+recuerd0 search "auth"
+
+# Audit: include what has been retired
+recuerd0 memory list --workspace 1 --include obsolete
+recuerd0 search "auth" --include obsolete
+```
+
+Rules that matter when reasoning about results:
+
+- **Tag the current version.** Retrieval reads the latest version's tags. Tagging an old version retires nothing.
+- **Fetching by id is never filtered.** `memory show` and every `memory read` subcommand return a retired memory with no flag, which is why they take no `--include`.
+- **The flag is required even when filtering for the tag.** `memory list --tags obsolete` returns nothing without `--include obsolete`.
+- **`search` reports what it withheld.** The summary carries `(N obsolete hidden)` and an `include-obsolete` breadcrumb repeats the query with the flag. A non-zero count means the topic exists but has been retired — read it before creating a new memory that would silently duplicate it.
+- **An unrecognized token returns empty.** `--include bogus` matches nothing, so the CLI returns an empty result set (exit 0, no API call) with a summary naming the token. It never falls back to the unwidened list.
+- **Nothing is deleted.** Version history stays intact; the memory just stops surfacing in retrieval.
 
 ### Version
 

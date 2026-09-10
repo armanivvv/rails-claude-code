@@ -93,11 +93,14 @@ Before any `memory create`, you MUST:
    - Quote multi-word phrases that must match as a unit: `'"access request"'`.
    - Keep each variant to 2–4 distinctive terms. Long natural-language sentences fail because every token must match.
 
+   **Retired memories are hidden from these searches.** `search` excludes anything tagged `obsolete`, `superseded`, or `deprecated` by default and reports the count it withheld as `(N obsolete hidden)` in the summary. A non-zero count on a variant means the topic *does* exist in the workspace and was deliberately retired — re-run that variant with `--include obsolete` and read what you find before writing. Creating a fresh memory on a topic someone retired last month is a duplicate the dedup search was built to prevent, and it is the one case where zero visible results is not the same as "nothing here."
+
    **Stop condition.** If two or more variants return zero results and one returns a weak/unrelated hit, treat the topic as **not found** and create — but log in your reasoning that recall was thin, so a later audit can catch a possible twin. If any variant returns a strong same-topic match, default to `memory version create`.
 3. **Search across workspaces** — also run `recuerd0 search "<key terms>" --pretty` *without* `--workspace` to find related memories in other workspaces in the same account. If a strong cross-workspace match exists, after you've created or versioned the new memory, ask the user in one line: `Link this to memory <id> '<title>' in workspace <name>? (y/n)`. On yes, run `recuerd0 memory link add <new_id> --to <other_id>`. On anything else, skip the link. Never link silently.
 4. **Decide** based on what you find:
    - **Strong match** (same topic, same scope, just evolved): use `recuerd0 memory version create --workspace <id> <memory_id> --content -` to add a new version. **Default to versioning** — recuerd0's whole versioning model exists for this. Preserve history.
    - **Wrong match** (the existing memory is incorrect, not just outdated): use `recuerd0 memory update --workspace <id> <memory_id>` to overwrite.
+   - **Reversed** (the memory was right, and the thing it describes no longer exists or was decided against): retire it with an obsolete tag rather than overwriting it — see **Retiring Memories**. The old rationale stays readable; it just stops surfacing.
    - **No match**: only then call `recuerd0 memory create`.
 
    If a candidate "duplicate" memory is large, use `recuerd0 memory read grep <id> "<key term>"` to confirm the fact already exists before loading the full body — this is much cheaper than `memory show` for long memories.
@@ -200,6 +203,60 @@ Every memory carries a `category`, picked from a locked four-value enum. The ser
 
 ---
 
+## Retiring Memories
+
+Three tags are reserved: `obsolete`, `superseded`, and `deprecated`. Adding any of them to a memory's **current version** drops it out of `search`, `memory list`, and `workspace context` — everywhere retrieval looks for what is true now. Nothing is deleted and the version history stays intact.
+
+This is the tool for knowledge that was *correct and no longer applies*. Distinguish it from the two neighbouring cases:
+
+| Situation | Action |
+|---|---|
+| The knowledge evolved — same topic, new detail | `memory version create` (the default) |
+| The memory was **wrong** when written | `memory update` — correct it in place |
+| The memory was **right**, and the thing is gone or reversed | Retire it: version it with an obsolete tag |
+| The memory should never have existed | `memory delete` — rare; prefer retiring |
+
+**Retire by versioning, not by updating.** Add the tag through `memory version create` so the retirement is itself a dated entry in the history, and say *what replaced it* in the body:
+
+```bash
+recuerd0 memory version create --workspace 1 42 \
+  --category decision \
+  --tags "auth,rails,superseded" \
+  --content - <<'EOF'
+# Auth strategy: Devise
+
+**Superseded 2026-09-09** by "Auth strategy: Clave passwordless" (memory 87).
+
+Retained for the rationale below — why Devise was chosen originally, and what
+made us reverse it.
+
+<original body>
+EOF
+```
+
+**Keep the topic tags.** Retiring is additive: keep `auth`, `rails`, and friends so the memory is still findable by an audit that passes `--include obsolete`. Stripping them down to just `superseded` makes it unfindable by any route except its id.
+
+**Point forward.** A retired memory that doesn't name its replacement is a dead end. Lead the body with the supersession line and the new memory's id.
+
+**When to retire proactively.** Same discipline as capture — act without being asked when the conversation makes it unambiguous:
+
+- A decision was explicitly reversed ("we're dropping Sidekiq, moving to Solid Queue")
+- The subject was removed from the codebase (the gem is gone, the endpoint is deleted)
+- A dedup search surfaced an old memory that flatly contradicts what the session just established — retire the old one *and* create the new one, in that order
+
+Do **not** retire when the memory is merely old, when it still describes something true in a narrower scope, or when you are only guessing that it was replaced. Ask in one line if unsure.
+
+**Auditing.** To see what has been retired in a workspace:
+
+```bash
+recuerd0 memory list --workspace 1 --include obsolete --pretty
+recuerd0 search "auth" --include obsolete --pretty
+```
+
+`memory show` and `memory read` are never filtered — a retired memory is always fetchable by id, so you can read one without any flag.
+
+---
+
 ## Memory Links
 
 Memory links — sometimes called *tunnels* — are undirected, unlabeled "see also" connections between two memories within the same account. Unlike tags or workspaces, links cross workspace boundaries: an "auth strategy" memory in the `rails-app` workspace can be linked to "auth strategy" in the `mobile-app` workspace, letting you express that memories in two different projects cover related territory.
@@ -253,7 +310,7 @@ Every successful capture must produce **one line** of user-facing output, in thi
   → linked to "<other_title>" in workspace <other_name> (id <other_id>)
 ```
 
-Where `<action>` is one of: `created`, `versioned`, `updated`. The second indented line is emitted **only when a link was actually created in this capture**. If no link was created, omit the link line entirely — do not say "no links". Examples:
+Where `<action>` is one of: `created`, `versioned`, `updated`, `retired`. The second indented line is emitted **only when a link was actually created in this capture**. If no link was created, omit the link line entirely — do not say "no links". Examples:
 
 ```
 ✓ Saved to workspace rails-patterns (id 1) as "FTS5 trigram tokenizer for substring search" [discovery] (id 87) [created]
@@ -262,6 +319,13 @@ Where `<action>` is one of: `created`, `versioned`, `updated`. The second indent
   → linked to "Auth strategy" in workspace rails-app (id 42)
 
 ✓ Saved to workspace rails-patterns (id 1) as "Auth strategy" [decision] (id 42) [versioned]
+```
+
+A retirement is announced the same way, and when it accompanies a replacement, announce both — the new memory first, then what it retired:
+
+```
+✓ Saved to workspace rails-patterns (id 1) as "Auth strategy: Clave passwordless" [decision] (id 87) [created]
+  → retired "Auth strategy: Devise" (id 42) as superseded
 ```
 
 Do not narrate the dedup process, the search results, or the workspace resolution unless something went wrong or the user asked. The one-liner is enough.
@@ -305,7 +369,7 @@ What the user set out to accomplish.
 
 4. **Format guardrails**:
    - **Title**: declarative, scoped, ≤80 chars. Lead with the conclusion ("FTS5 errors surface as ActiveRecord::StatementInvalid"), not the topic ("FTS5 stuff").
-   - **Tags**: 3–6, lowercase, hyphenated. Aim for one domain tag (`auth`, `deploy`), one tech tag (`rails`, `sqlite`), one type tag (`decision`, `pattern`, `bugfix`).
+   - **Tags**: 3–6, lowercase, hyphenated. Aim for one domain tag (`auth`, `deploy`), one tech tag (`rails`, `sqlite`), one type tag (`decision`, `pattern`, `bugfix`). **Never use `obsolete`, `superseded`, or `deprecated` as topic tags** — they are reserved, and any one of them hides the memory from retrieval the moment it is saved (see **Retiring Memories**). A memory *about* deprecation gets `deprecation`, not `deprecated`.
    - **Source**: `claude-code-session` for proactive captures, `manual` for explicit user requests, `<project>-decision` for architecture-decision memories.
    - **Category**: required. Pick from `decision`, `discovery`, `preference`, `general`. Lean toward the more specific choice — `general` is a fallback, not a default.
 
@@ -347,8 +411,9 @@ Each capture follows the same sequence — the detail for every step is in the s
 
 1. **Notice** a capture-worthy moment (**When to Capture**) — proactively, without being asked.
 2. **Route** to the right workspace (**Workspace Routing**).
-3. **Dedup** before writing (**Dedup-Before-Write Protocol**) — default to `version create` on a strong match; search across workspaces and confirm before any link (**Memory Links**).
+3. **Dedup** before writing (**Dedup-Before-Write Protocol**) — default to `version create` on a strong match; check any `(N obsolete hidden)` count before treating a topic as new; search across workspaces and confirm before any link (**Memory Links**).
 4. **Categorize** the save (**Categories**) — always pass `--category`.
-5. **Announce** in one line (**Save Notice Convention**) — no narration unless something went wrong.
+5. **Retire** anything the save reverses (**Retiring Memories**) — tag the old memory's current version, never delete it.
+6. **Announce** in one line (**Save Notice Convention**) — no narration unless something went wrong.
 
 CLI mechanics — JSON parsing, pagination, stdin piping, error handling, reading large memories in windows — are in `references/cli-reference.md`.
